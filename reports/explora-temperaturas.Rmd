@@ -1,0 +1,99 @@
+---
+title: "Temperatura JP x CG"
+output:
+    html_document:
+    df_print: paged
+theme: sandstone
+---
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+library(lubridate)
+library(ggbeeswarm)
+library(magrittr)
+library(dplyr)
+theme_set(theme_bw())
+```
+
+```{r read}
+climas = read_csv(here::here("data/clima_cg_jp-semanal.csv"), 
+                  col_types = "cTdddddd")
+
+glimpse(climas)
+```
+
+## Temperatura
+
+### Onde é mais quente?
+
+Como o propósito da seguinte questão é identificar qual é a cidade mais quente, o cálculo da mediana para as temperaturas máximas foi utilizada e podendo ser visualizadas no gráfico de linha abaixo a cada dois anos. Dessa maneira, ao longo dos anos é possível observar que João Pessoa encontra-se com temperaturas máximas maiores quando comparada a cidade de Campina Grande.
+
+
+```{r}
+climas %>%
+    group_by(cidade, ano) %>%
+    summarise(temp_max = median(tmax)) %>%
+    ggplot(aes(x= ano, y= temp_max, colour = cidade)) + 
+    geom_line () +
+    scale_x_continuous(breaks = seq(1987,2018,2)) + 
+    scale_y_continuous(breaks = seq(25,35,0.5)) +
+    theme(legend.position = "bottom", axis.text.x= element_text(angle = 45)) +
+    labs(x = "Ano", y = "Temperatura Máxima (ºC)", colour = "Cidade")
+```
+
+
+### Quais os meses mais quentes e mais frios? 
+
+Utilizando a média das temperaturas para calcular onde seriam os meses mais quentes e mais frios nas cidades de João Pessoa e Campina Grande, foi visto através do gráfico boxplot que os meses mais frios estão entre junho e julho, e por outro lado os meses mais quentes são os meses de fevereiro, março e dezembro. 
+
+
+```{r}
+climas %>%
+    group_by(mes) %>%
+    summarise(temp_media = mean(tmedia))
+    ggplot(climas, aes(x = mes, y = tmedia, group = mes)) + 
+    geom_boxplot(fill="#6699ff") + 
+    scale_x_continuous(
+        breaks = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), 
+        labels = c("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")) +
+    labs(x = "Mês", y = "Temperatura Média (ºC)")
+```
+
+
+
+## Chuva
+
+
+### No geral, onde chove mais?
+
+Considerando a análise do índice pluviométrico de todos os anos da quantidade de chuva, o gráfico abaixo representa de que se chove mais em João Pessoa do que Campina Grande, tendo em vista que a cauda mais à direita demonstra essa predominância de chuvas na cidade de João Pessoa.   
+
+
+```{r message=FALSE, warning=FALSE}
+climas %>%
+   mutate(chuva=as.numeric(chuva)) %>%
+   group_by(cidade) %>%
+   ggplot(mapping = aes(x=chuva, fill=cidade)) + 
+   geom_area (stat ="bin", color="black", alpha=0.5) +
+   theme(legend.position = "bottom") +
+  labs(x = "Cidade", y = "Índice Pluviométrico (mm)")
+```
+
+### A distribuição é diferente em meses específicos? 
+
+No gráfico abaixo ao realizar o agrupamento por mês, é visto que ocorrem diferenças nas distribuições de chuva para cada mês. Dessa forma é possível observar que nos meses de junho e julho ocorre uma maior concentração de chuvas, diferentemente dos meses de outubro e novembro.
+
+
+```{r}
+climas %>%
+    ggplot(mapping = aes(x = mes, y = chuva)) +
+    geom_col(fill = "#006699") +
+    scale_x_continuous(
+        breaks = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), 
+        labels = c("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")
+    ) +
+    labs(x = "Mês", y = "Índice Pluviométrico (mm)")
+```
+
+
